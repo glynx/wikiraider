@@ -89,12 +89,16 @@ class ActionParse:
         colorlog.getLogger().info('Iterating all of the XML files and pushing pages to queue. This might take a while...')
         colorlog.getLogger().info('In the meantime the consumers are already processing the pages...')
 
+        namespaces = {'': None}
         for xml_file in xml_files:
             for event, element in xml.etree.cElementTree.iterparse(open(xml_file, 'r')):
+                if element.tag.startswith('{'):
+                    # extract last used namespace dynamically and set it as default
+                    namespaces[''] = element.tag.split('}')[0][1:]  
                 if element.tag.endswith('page'):
-                    title = element.find('.//{http://www.mediawiki.org/xml/export-0.10/}title')
-                    revision = element.find('.//{http://www.mediawiki.org/xml/export-0.10/}revision')
-                    text = revision.find('.//{http://www.mediawiki.org/xml/export-0.10/}text')
+                    title = element.find('.//title', namespaces)
+                    revision = element.find('.//revision', namespaces)
+                    text = revision.find('.//text', namespaces)
 
                     element.clear()
 
